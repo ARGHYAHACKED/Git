@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monk Mode Routine Tracker</title>
+  <link rel="manifest" href="/manifest.json">
+<!-- <link rel="icon" href="/icon-192x192.png">
+<link rel="apple-touch-icon" href="/icon-512x512.png"> -->
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      background-color: #F7F7F7; /* Light background */
+    }
+
+    .container {
+      max-width: 400px; /* Mobile size */
+      margin: 20px auto;
+      background-color: rgba(255, 255, 255, 0.9); /* Transparent background */
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2.2em;
+      color: #333;
+    }
+
+    .day-selector-container {
+      overflow-x: auto;
+      white-space: nowrap;
+      margin-bottom: 20px;
+      padding: 10px 0; /* Added padding for better touch */
+    }
+
+    .day-selector {
+      display: inline-flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .day-selector button {
+      padding: 10px 15px;
+      margin: 5px;
+      font-size: 1em;
+      background-color: #007AFF; /* iOS primary blue color */
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .day-selector button.completed {
+      background-color: #4CD964; /* Green for completed */
+    }
+
+    .day-selector button:hover {
+      background-color: #005BB5; /* Darker blue on hover */
+    }
+
+    .task-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px;
+      border-bottom: 1px solid #E5E5E5;
+      background-color: #fff;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .task-item:hover {
+      background-color: #F1F1F1;
+    }
+
+    .task-item input {
+      margin-right: 10px;
+      cursor: pointer;
+      width: 25px;
+      height: 25px;
+      transition: transform 0.2s ease;
+    }
+
+    .task-item input:checked {
+      transform: scale(1.2); /* Animation when checked */
+    }
+
+    .task-item span {
+      flex-grow: 1;
+      font-size: 1em; /* Slightly smaller for mobile */
+      color: #333;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: #A9A9A9;
+    }
+
+    .clock {
+      position: fixed;
+      top: 10px;
+      right: 20px;
+      background-color: #007AFF;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    /* Styling the scrollbar */
+    .day-selector-container::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .day-selector-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .day-selector-container::-webkit-scrollbar-thumb {
+      background: #007AFF;
+      border-radius: 5px;
+    }
+
+    .day-selector-container::-webkit-scrollbar-thumb:hover {
+      background: #005BB5;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 600px) {
+      .task-item span {
+        font-size: 0.9em; /* Smaller text on small devices */
+      }
+      .day-selector button {
+        font-size: 0.9em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="clock" id="clock"></div>
+
+  <div class="container">
+    <h1>Monk Mode Routine Tracker</h1>
+
+    <div class="day-selector-container">
+      <div class="day-selector" id="day-selector"></div>
+    </div>
+
+    <ul class="task-list" id="task-list"></ul>
+  </div>
+
+  <script>
+   // Updated Array of tasks
+const tasks = [
+  { task: 'Wake Up', time: '6:00 AM', duration: '15 mins' },
+  { task: 'Morning Water/Deep Breathing', time: '6:15 AM', duration: '15 mins' },
+  { task: 'Breakfast', time: '6:30 AM', duration: '30 mins' },
+  { task: 'Gate Study - Concepts', time: '7:00 AM', duration: '2.5 hours' },
+  { task: 'Short Walk', time: '9:30 AM', duration: '30 mins' },
+  { task: 'Mid Morning Snack', time: '10:00 AM', duration: '15 mins' },
+  { task: 'Gate Study - Practice', time: '10:15 AM', duration: '2 hours' },
+  { task: 'Meal', time: '12:15 PM', duration: '45 mins' },
+  { task: 'Workout', time: '1:00 PM', duration: '30 mins' },
+  { task: 'Rest/Short Nap', time: '1:30 PM', duration: '30 mins' },
+  { task: 'Lunch', time: '2:00 PM', duration: '30 mins' },
+  { task: 'Study - College Subject', time: '2:30 PM', duration: '2 hours' },
+  { task: 'Short Walks', time: '4:30 PM', duration: '30 mins' },
+  { task: 'Python', time: '5:00 PM', duration: '2 hours' },
+  { task: 'Evening Snack', time: '7:00 PM', duration: '30 mins' },
+  { task: 'Relaxing Time/Reading Books/Money', time: '7:30 PM', duration: '30 mins' },
+  { task: 'Light Activity + Coding DSA Problem', time: '8:00 PM', duration: '45 mins' },
+  { task: 'Gate Study - Revision', time: '8:45 PM', duration: '1 hour' },
+  { task: 'Dinner', time: '9:45 PM', duration: '15 mins' },
+  { task: 'Wind Down', time: '10:00 PM', duration: '1 hour' },
+  { task: 'Sleep', time: '11:00 PM', duration: '7-8 hours' },
+];
+
+
+    // Function to format the date
+    function formatDate(date) {
+      return date.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+
+    // Generate 20 days starting from 9/10/2024
+    const startDate = new Date('2024-10-09');
+    const days = Array.from({ length: 20 }, (_, i) => {
+      const currentDay = new Date(startDate);
+      currentDay.setDate(startDate.getDate() + i);
+      return `Day ${i + 1} (${formatDate(currentDay)})`;
+    });
+
+    // Load day selector buttons
+    const daySelector = document.getElementById('day-selector');
+    days.forEach((day, index) => {
+      const button = document.createElement('button');
+      button.textContent = day;
+      button.onclick = () => loadTasks(index + 1);
+      daySelector.appendChild(button);
+    });
+
+    // Load tasks for selected day
+    function loadTasks(day) {
+      const taskList = document.getElementById('task-list');
+      taskList.innerHTML = '';  // Clear previous tasks
+
+      tasks.forEach((task, index) => {
+        const isCompleted = JSON.parse(localStorage.getItem(`task-${day}-${index}`)) || false;
+
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.innerHTML = `
+          <input type="checkbox" ${isCompleted ? 'checked' : ''} onclick="toggleTask(${day}, ${index})">
+          <span class="${isCompleted ? 'completed' : ''}">${task.task} - ${task.time} (${task.duration})</span>
+        `;
+        taskList.appendChild(li);
+      });
+    }
+
+    // Toggle task completion
+    function toggleTask(day, index) {
+      const isCompleted = JSON.parse(localStorage.getItem(`task-${day}-${index}`)) || false;
+      localStorage.setItem(`task-${day}-${index}`, !isCompleted);
+      loadTasks(day); // Reload tasks to reflect changes
+    }
+
+    // Clock functionality
+    function updateClock() {
+      const now = new Date();
+      const clockElement = document.getElementById('clock');
+      clockElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    setInterval(updateClock, 1000); // Update clock every second
+    updateClock(); // Initial call to set the clock
+
+
+
+
+
+    if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then((reg) => console.log('Service Worker registered', reg))
+      .catch((err) => console.log('Service Worker registration failed', err));
+  }
+  </script>
+</body>
+</html>
